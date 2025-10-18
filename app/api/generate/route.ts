@@ -49,11 +49,9 @@ Respond strictly as JSON in this format:
       contents: prompt,
     });
 
-    // 1. Get raw text
     let text: any = result.text;
     text = text?.replace(/(^```json|```$)/g, "").trim();
 
-    // 3. Parse safely
     let parsed;
     try {
       parsed = JSON.parse(text);
