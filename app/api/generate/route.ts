@@ -49,10 +49,19 @@ Respond strictly as JSON in this format:
       contents: prompt,
     });
 
-    // Get plain text output
-    const text = result.text;
-    console.log(text);
-    const parsed = JSON.parse(text);
+    // 1. Get raw text
+    let text: any = result.text;
+    text = text?.replace(/(^```json|```$)/g, "").trim();
+
+    // 3. Parse safely
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON:", e);
+      console.log("Raw response:", text);
+      parsed = []; // fallback
+    }
 
     return NextResponse.json({ suggestions: parsed });
   } catch (error: any) {

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import axios from "axios";
+import { FiLink } from "react-icons/fi"; // Link icon
 
 interface Suggestion {
   originalText: string;
@@ -30,7 +31,14 @@ export default function Home() {
         targetUrl,
         anchorText,
       });
-      setSuggestions(res.data.suggestions);
+
+      setSuggestions(res.data.suggestions || []);
+      if (
+        !res.data.suggestions ||
+        res.data.suggestions.length === 0
+      ) {
+        setError("No suggestions found");
+      }
     } catch (err: any) {
       console.error(err);
       setError("Failed to get suggestions");
@@ -39,13 +47,56 @@ export default function Home() {
     }
   };
 
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied suggested content!");
+    });
+  };
+
+  const renderSuggestedContent = (html: string) => {
+    const urlRegex = /<a href="(.*?)">(.*?)<\/a>/g;
+    const parts: any[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlRegex.exec(html)) !== null) {
+      const [full, url, text] = match;
+      const index = match.index;
+
+      if (index > lastIndex) {
+        parts.push(html.slice(lastIndex, index));
+      }
+
+      parts.push(
+        <span
+          key={index}
+          className="inline-flex items-center text-blue-600 underline hover:text-blue-800 cursor-pointer"
+        >
+          <FiLink className="mr-1" />
+          {text}
+        </span>
+      );
+
+      lastIndex = index + full.length;
+    }
+
+    if (lastIndex < html.length) {
+      parts.push(html.slice(lastIndex));
+    }
+
+    return parts;
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div className="w-full max-w-lg bg-white p-6 rounded shadow">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+      <div className="w-full max-w-6xl bg-white p-6 rounded shadow">
         <h1 className="text-2xl font-bold mb-4">
           Link Insertion Suggestion Tool
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 mb-6"
+        >
           <input
             type="url"
             placeholder="Source Article URL"
@@ -73,42 +124,92 @@ export default function Home() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-2 bg-blue-600 text-black rounded hover:bg-blue-700"
+            className="w-full p-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2"
           >
-            {loading
-              ? "Generating..."
-              : "Generate Suggestions"}
+            {loading ? (
+              <>
+                {/* Spinner */}
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  ></path>
+                </svg>
+                Please wait...
+              </>
+            ) : (
+              "Generate Suggestions"
+            )}
           </button>
         </form>
 
         {error && (
-          <p className="mt-4 text-red-600">{error}</p>
+          <p className="text-red-600 font-semibold mb-4">
+            {error}
+          </p>
         )}
 
-        {suggestions && (
-          <div className="mt-6 space-y-4">
-            {suggestions.map((s, idx) => (
-              <div
-                key={idx}
-                className="p-4 border rounded bg-gray-500"
-              >
-                <h2 className="font-semibold">
-                  Suggestion {idx + 1}
-                </h2>
-                <p>
-                  <strong>Original Text:</strong>
-                  <br />
-                  {s.originalText}
-                </p>
-                <p className="mt-2">
-                  <strong>Suggested Change:</strong>
-                  <br />
-                  {s.suggestedChange}
-                </p>
+        <div className="flex gap-4 overflow-x-auto py-2">
+          {(suggestions && suggestions.length > 0
+            ? suggestions
+            : Array.from({ length: 3 })
+          ).map((s: any, idx) => (
+            <div
+              key={idx}
+              className="flex-shrink-0 w-96 h-80 p-4 border rounded bg-gray-100 relative flex flex-col"
+            >
+              {s?.suggestedChange && (
+                <button
+                  onClick={() =>
+                    handleCopy(s.suggestedChange)
+                  }
+                  className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm"
+                >
+                  Copy
+                </button>
+              )}
+              <h2 className="font-semibold mb-2">
+                Suggestion {idx + 1}
+              </h2>
+              <div className="text-gray-700 mb-2 overflow-y-auto flex-1 pr-2">
+                {s ? (
+                  <>
+                    <p>
+                      <strong>Original Text:</strong>
+                      <br />
+                      {s.originalText}
+                    </p>
+                    <p className="mt-2">
+                      <strong>Suggested Change:</strong>
+                      <br />
+                      {renderSuggestedContent(
+                        s.suggestedChange
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-gray-400">
+                    No suggestion available
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
