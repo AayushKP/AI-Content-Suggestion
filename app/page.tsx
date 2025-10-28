@@ -69,15 +69,19 @@ export default function Home() {
 
       // Medium-style highlighted link
       parts.push(
-        <span
-          key={index}
-          className="inline-flex items-center text-blue-600 relative cursor-pointer transition-colors duration-200 hover:text-blue-800 group"
-        >
-          <FiLink className="mr-1 w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity duration-200" />
-          <span className="relative z-10">{text}</span>
-          <span className="absolute inset-0 bg-blue-100 opacity-0 group-hover:opacity-50 rounded transition-opacity duration-200"></span>
-        </span>
-      );
+  <a
+    key={index}
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center text-blue-600 relative cursor-pointer transition-colors duration-200 hover:text-blue-800 group"
+  >
+    <FiLink className="mr-1 w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity duration-200" />
+    <span className="relative z-10 underline">{text}</span>
+    <span className="absolute inset-0 bg-blue-100 opacity-0 group-hover:opacity-50 rounded transition-opacity duration-200"></span>
+  </a>
+);
+
 
       lastIndex = index + full.length;
     }
