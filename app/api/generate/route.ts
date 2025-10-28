@@ -15,8 +15,7 @@ async function scrapeText(url: string): Promise<string> {
 
 export async function POST(req: Request) {
   try {
-    const { sourceUrl, targetUrl, anchorText } =
-      await req.json();
+    const { sourceUrl, targetUrl, anchorText } = await req.json();
 
     const sourceText = await scrapeText(sourceUrl);
     const targetText = await scrapeText(targetUrl);
@@ -45,7 +44,7 @@ Respond strictly as JSON in this format:
     });
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
     });
 
